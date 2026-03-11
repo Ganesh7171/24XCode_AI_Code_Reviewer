@@ -39,7 +39,7 @@ class CodeReviewer:
         self.region = aws_region or os.getenv("AWS_REGION", "us-east-1")
         self.model_id = model_id or os.getenv(
             "BEDROCK_MODEL_ID",
-            "anthropic.claude-3-sonnet-20240229-v1:0"
+            "anthropic.claude-3.5-sonnet-20240620-v1:0"
         )
         self.aws_profile = aws_profile or os.getenv("AWS_PROFILE")
         

@@ -13,6 +13,37 @@ const ReviewResult = ({ result }) => {
 
     const { issues, risks, improvements, refactored_code, explanation } = result;
 
+    // Configuration for large code chunks
+    const DISPLAY_THRESHOLD = 10000; // Characters
+
+    const handleDownload = () => {
+        if (!refactored_code) return;
+        
+        // Create a blob with the refactored code
+        const blob = new Blob([refactored_code], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create an invisible anchor element and trigger download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'refactored_code.txt';
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const isDisplayable = refactored_code && refactored_code.length <= DISPLAY_THRESHOLD;
+    
+    // Safety net: Check if the LLM stubbornly refused and just gave an apology string
+    const isLlmRefusal = refactored_code && 
+        refactored_code.length < 500 && 
+        (refactored_code.toLowerCase().includes('not feasible') || 
+         refactored_code.toLowerCase().includes('due to the length') ||
+         refactored_code.toLowerCase().includes('here is an example'));
+
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Issues Section */}
@@ -76,39 +107,73 @@ const ReviewResult = ({ result }) => {
             )}
 
             {/* Refactored Code Section */}
-            {refactored_code && (
-                <div className="card">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold text-primary-400 flex items-center">
-                            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                            </svg>
-                            Refactored Code
-                        </h3>
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(refactored_code);
-                                // Optional: simple alert or state change for feedback
-                                const btn = document.getElementById('copy-btn');
-                                if (btn) {
-                                    const originalText = btn.innerHTML;
-                                    btn.innerHTML = '<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!';
-                                    btn.classList.add('text-green-400');
-                                    setTimeout(() => {
-                                        btn.innerHTML = originalText;
-                                        btn.classList.remove('text-green-400');
-                                    }, 2000);
-                                }
-                            }}
-                            id="copy-btn"
-                            className="bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 px-3 py-1.5 rounded-lg text-sm flex items-center transition-all duration-200 border border-slate-600/50"
-                        >
-                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-3 8.5V17l.5-1m-.5 1l-.5-1" />
-                            </svg>
-                            Copy Code
-                        </button>
+            <div className="card">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-primary-400 flex items-center">
+                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        Refactored Code
+                    </h3>
+                    <div className="flex space-x-3">
+                        {refactored_code && isDisplayable && !isLlmRefusal && (
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(refactored_code);
+                                    const btn = document.getElementById('copy-btn');
+                                    if (btn) {
+                                        const originalText = btn.innerHTML;
+                                        btn.innerHTML = '<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!';
+                                        btn.classList.add('text-green-400');
+                                        setTimeout(() => {
+                                            btn.innerHTML = originalText;
+                                            btn.classList.remove('text-green-400');
+                                        }, 2000);
+                                    }
+                                }}
+                                id="copy-btn"
+                                className="bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 px-3 py-1.5 rounded-lg text-sm flex items-center transition-all duration-200 border border-slate-600/50"
+                            >
+                                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-3 8.5V17l.5-1m-.5 1l-.5-1" />
+                                </svg>
+                                Copy Code
+                            </button>
+                        )}
+                        
+                        {refactored_code && !isLlmRefusal && (
+                            <button
+                                onClick={handleDownload}
+                                id="download-btn"
+                                className="bg-primary-600/30 hover:bg-primary-600/50 text-primary-300 px-3 py-1.5 rounded-lg text-sm flex items-center transition-all duration-200 border border-primary-500/40 cursor-pointer"
+                            >
+                                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download .txt
+                            </button>
+                        )}
                     </div>
+                </div>
+
+                {!refactored_code ? (
+                    <div className="flex items-start space-x-3 bg-slate-700/30 border border-slate-600/50 rounded-lg p-4">
+                        <svg className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-slate-400 text-sm">Refactored code was not returned by the AI. Check the Explanation section for the raw response.</p>
+                    </div>
+                ) : isLlmRefusal ? (
+                    <div className="flex items-start space-x-3 bg-slate-700/30 border border-slate-600/50 rounded-lg p-4">
+                        <svg className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                            <p className="text-yellow-400 font-medium text-sm">Full refactor not generated</p>
+                            <p className="text-slate-400 text-sm mt-1">{refactored_code}</p>
+                        </div>
+                    </div>
+                ) : isDisplayable ? (
                     <div className="rounded-lg overflow-hidden">
                         <SyntaxHighlighter
                             language="python"
@@ -123,8 +188,21 @@ const ReviewResult = ({ result }) => {
                             {refactored_code}
                         </SyntaxHighlighter>
                     </div>
-                </div>
-            )}
+                ) : (
+                    <div className="flex items-start space-x-3 bg-slate-700/30 border border-slate-600/50 rounded-lg p-4">
+                        <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p className="text-blue-400 font-medium text-sm">Code too large to preview in browser</p>
+                            <p className="text-slate-400 text-sm mt-1">
+                                The refactored code successfully generated but is {refactored_code.length.toLocaleString()} characters long. 
+                                Click "Download .txt" above to save and view the full file.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Explanation Section */}
             {explanation && (
