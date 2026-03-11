@@ -66,7 +66,7 @@ class CodeReviewer:
 1. Analyze the code for issues, bugs, security vulnerabilities, and violations of the provided standards.
 2. Identify risks and potential problems.
 3. Suggest specific improvements.
-4. Provide refactored code that addresses the issues.
+4. Stricltly Provide full refactored code that addresses the issues.
 5. Explain your reasoning.
 
 **Output Format:**

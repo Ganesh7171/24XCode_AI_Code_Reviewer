@@ -72,8 +72,8 @@ const FileUpload = ({ onUploadSuccess }) => {
 
             <div
                 className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${dragActive
-                        ? 'border-primary-500 bg-primary-500/10'
-                        : 'border-slate-600 hover:border-slate-500'
+                    ? 'border-primary-500 bg-primary-500/10'
+                    : 'border-slate-600 hover:border-slate-500'
                     }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -119,8 +119,8 @@ const FileUpload = ({ onUploadSuccess }) => {
             {message && (
                 <div
                     className={`mt-4 p-4 rounded-lg ${message.type === 'success'
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                            : 'bg-red-500/20 text-red-400 border border-red-500/50'
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                        : 'bg-red-500/20 text-red-400 border border-red-500/50'
                         }`}
                 >
                     {message.text}
